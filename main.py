@@ -6,6 +6,7 @@ import os
 import readline
 load_dotenv()
 qz_post = client.Post(token = os.getenv('token'))
+qz_user = client.User(token = os.getenv('token'))
 
 @click.group()
 def cli():
@@ -24,6 +25,21 @@ def login(username,password):
         return
     set_key('.env',"token",token)
     click.echo("已写入token")
+@cli.group()
+def user():
+    """用户功能"""
+    pass
+
+@user.command()
+@click.option("--object", "as_object", is_flag=True, help="返回原始对象")
+def profile(as_object):
+    """查询自身资料"""
+    info = qz_user.get_user_info_by_token()
+    if as_object:
+        click.echo(info)
+    else:
+        info.display()
+
 @cli.group()
 def post():
     """帖子功能"""

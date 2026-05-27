@@ -1,5 +1,6 @@
 import httpx
 import json
+from models import UserInfo
 def login(username,password):
     with httpx.Client(base_url="https://hehenya.dpdns.org:8505") as client:
         headers = {"Content-Type":"application/json"}
@@ -153,7 +154,11 @@ class User:
         url = f"{self.base_url}/user_info_token"
         try:
             response = httpx.post(url, headers=self.headers)
-            return response.json()
+            data = response.json()
+            if data.get("success"):
+                known = {k: v for k, v in data["user_info"].items() if k in UserInfo.__dataclass_fields__}
+                return UserInfo(**known)
+            return data
         except Exception as e:
             return f"请求出错: {str(e)}"
 # 3.通知获取类
