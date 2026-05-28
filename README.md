@@ -4,7 +4,6 @@
   <img src="https://img.shields.io/badge/Python-3.8+-3776AB?logo=python" alt="Python"/>
   <img src="https://img.shields.io/badge/Click-2196F3?logo=python" alt="Click"/>
   <img src="https://img.shields.io/badge/HTTPX-5A29E4?logo=python" alt="HTTPX"/>
-  <img src="https://img.shields.io/badge/状态-暂未完善-00C853" alt="Status"/>
   <img src="https://img.shields.io/badge/License-MIT-2D9C5C" alt="License"/>
   <img src="https://img.shields.io/github/stars/n454557376767/qz-cli?style=social" alt="Stars"/>
 </p>
