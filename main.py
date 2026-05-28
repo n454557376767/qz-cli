@@ -90,7 +90,20 @@ def get(category_id, page, per_page, message_type, debug):
         click.echo(f"API返回：{response}")
     if isinstance(response, dict) and response.get("success"):
         for msg in response.get("messages", []):
-            click.echo(f"[{msg.get('message_id')}] {msg.get('username')}: {msg.get('content', {}).get('text', '')}")
+            msg_type = msg.get("message_type", 0)
+            content = msg.get("content", {})
+            prefix = f"[{msg.get('message_id')}] {msg.get('username')}"
+
+            if msg_type == 3:
+                title = content.get("title", "")
+                text = content.get("content", "")
+                display = f"{prefix}: [{title}] {text}" if title else f"{prefix}: {text}"
+            elif msg_type == 1:
+                display = f"{prefix}: [图片] {content.get('url', '')}"
+            else:
+                display = f"{prefix}: {content.get('text', '')}"
+
+            click.echo(display)
         pagination = response.get("pagination", {})
         click.echo(f"--- 第{pagination.get('current_page')}/{pagination.get('total_pages')}页 共{pagination.get('total_messages')}条 ---")
     elif isinstance(response, dict):
