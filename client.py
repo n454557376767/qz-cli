@@ -91,13 +91,19 @@ class Post:
         except Exception as e:
             return str(e)
 
-    def get_messages(self, category_id, page, per_page):
-        url = f"{self.base_url}/v3/get_message?category_id={category_id}&page={page}&per_page={per_page}"
+    def get_messages(self, category_id, page, per_page=10, message_type=None, timeout=20):
+        params = {
+            "category_id": category_id,
+            "page": page,
+            "per_page": per_page
+        }
+        if message_type is not None:
+            params["message_type"] = message_type
 
         try:
-            response = httpx.get(url, headers=self.headers)
+            response = httpx.get(f"{self.base_url}/v3/get_message", headers=self.headers, params=params, timeout=timeout)
             return response.json()
-        except httpx.RequestException as e:
+        except httpx.HTTPError as e:
             return f"请求出错: {str(e)}"
 
     def reply_to_message(self, content, category_id, referenced_message_id):

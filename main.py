@@ -52,7 +52,7 @@ def post():
 @click.option("--category_id",help="分区id")
 @click.option("--message_type",default=None,help="帖子类型")
 @click.option("--debug",default=False,is_flag=True,help="Debug模式")
-def send_post(content, title, is_markdown, category_id, message_type, debug):
+def send(content, title, is_markdown, category_id, message_type, debug):
     if is_markdown:
         response = qz_post.send_message(
             content=content,
@@ -71,5 +71,31 @@ def send_post(content, title, is_markdown, category_id, message_type, debug):
     if debug:
         click.echo(f"API返回：{response}")
     click.echo(f"已成功尝试发送")
+
+@post.command()
+@click.option("--category_id", default=1, help="分区ID")
+@click.option("--page", default=1, type=int, help="页码")
+@click.option("--per_page", default=10, help="每页数量")
+@click.option("--message_type", default=None, type=int, help="消息类型(0:文本 1:图片 2:图文 3:帖子 4:Markdown)")
+@click.option("--debug", is_flag=True, help="Debug模式")
+def get(category_id, page, per_page, message_type, debug):
+    """获取消息/帖子"""
+    response = qz_post.get_messages(
+        category_id=category_id,
+        page=page,
+        per_page=per_page,
+        message_type=message_type
+    )
+    if debug:
+        click.echo(f"API返回：{response}")
+    if isinstance(response, dict) and response.get("success"):
+        for msg in response.get("messages", []):
+            click.echo(f"[{msg.get('message_id')}] {msg.get('username')}: {msg.get('content', {}).get('text', '')}")
+        pagination = response.get("pagination", {})
+        click.echo(f"--- 第{pagination.get('current_page')}/{pagination.get('total_pages')}页 共{pagination.get('total_messages')}条 ---")
+    elif isinstance(response, dict):
+        click.echo(f"获取失败: {response.get('message')}")
+    else:
+        click.echo(f"获取失败: {response}")
 if __name__ == "__main__":
     cli()
