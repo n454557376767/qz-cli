@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
+from rich.table import Table
+from rich.console import Console
 
 
 @dataclass
@@ -31,20 +33,24 @@ class UserInfo:
     has_pending_audit: int = 0
 
     def display(self):
-        import click
-        click.echo("用户信息")
-        click.echo("━" * 30)
-        click.echo(f"ID:           {self.id}")
-        click.echo(f"用户名:      {self.username}")
-        click.echo(f"邮箱:        {self.email}")
-        click.echo(f"等级:        {self.level} (经验: {self.experience}/{self.next_level_exp})")
-        click.echo(f"金币:        {self.gold}")
+        console = Console()
+        table = Table(show_header=False, box=None, highlight=True)
+        table.add_column("key", style="bold yellow")
+        table.add_column("value", style="cyan")
+
+        table.add_row("ID", str(self.id))
+        table.add_row("用户名", self.username)
+        table.add_row("邮箱", self.email)
+        table.add_row("等级", f"{self.level} (经验: {self.experience}/{self.next_level_exp})")
+        table.add_row("金币", str(self.gold))
         checked = "已签到" if self.has_checked_in else "未签到"
-        click.echo(f"签到:        {checked} (连续{self.consecutive_check_ins}天, 累计{self.total_check_ins}天)")
-        click.echo(f"通知:        {self.unread_notification_count}条未读 / 共{self.total_notification_count}条")
-        click.echo(f"点赞:        {self.total_likes}")
-        click.echo(f"关注:        {self.following_count} | 粉丝: {self.followers_count}")
-        click.echo(f"称号:        {self.title}")
-        click.echo(f"简介:        {self.bio}")
+        table.add_row("签到", f"{checked} (连续{self.consecutive_check_ins}天, 累计{self.total_check_ins}天)")
+        table.add_row("通知", f"{self.unread_notification_count}条未读 / 共{self.total_notification_count}条")
+        table.add_row("点赞", str(self.total_likes))
+        table.add_row("关注/粉丝", f"{self.following_count} / {self.followers_count}")
+        table.add_row("称号", self.title)
+        table.add_row("简介", self.bio)
         banned = f"是 (至 {self.ban_end_time})" if self.is_banned else "否"
-        click.echo(f"封禁:        {banned}")
+        table.add_row("封禁", banned)
+
+        console.print(table)

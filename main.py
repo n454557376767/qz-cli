@@ -4,6 +4,9 @@ from dotenv import dotenv_values, set_key
 from dotenv import load_dotenv
 import os
 import readline
+from rich.console import Console
+
+console = Console()
 load_dotenv()
 qz_post = client.Post(token = os.getenv('token'))
 qz_user = client.User(token = os.getenv('token'))
@@ -19,12 +22,13 @@ def cli():
 def login(username,password):
     """登录"""
     try:
-        token = client.login(username, password).get("token")
+        with console.status("登录中..."):
+            token = client.login(username, password).get("token")
     except Exception as e:
-        click.echo(f"登录失败: {e}", err=True)
+        console.print(f"[red]登录失败: {e}[/red]")
         return
     set_key('.env',"token",token)
-    click.echo("已写入token")
+    console.print("[green]已写入token[/green]")
 @cli.group()
 def user():
     """用户功能"""
@@ -34,7 +38,8 @@ def user():
 @click.option("--object", "as_object", is_flag=True, help="返回原始对象")
 def profile(as_object):
     """查询自身资料"""
-    info = qz_user.get_user_info_by_token()
+    with console.status("获取资料中..."):
+        info = qz_user.get_user_info_by_token()
     if as_object:
         click.echo(info)
     else:
@@ -53,24 +58,25 @@ def post():
 @click.option("--message_type",default=None,help="帖子类型")
 @click.option("--debug",default=False,is_flag=True,help="Debug模式")
 def send(content, title, is_markdown, category_id, message_type, debug):
-    if is_markdown:
-        response = qz_post.send_message(
-            content=content,
-            title=title,
-            message_type=message_type,
-            category_id=category_id,
-            is_markdown=True
-        )
-    else:
-        response = qz_post.send_message(
-            content=content,
-            title=title,
-            message_type=message_type,
-            category_id=category_id
-        )
+    with console.status("发送中..."):
+        if is_markdown:
+            response = qz_post.send_message(
+                content=content,
+                title=title,
+                message_type=message_type,
+                category_id=category_id,
+                is_markdown=True
+            )
+        else:
+            response = qz_post.send_message(
+                content=content,
+                title=title,
+                message_type=message_type,
+                category_id=category_id
+            )
     if debug:
-        click.echo(f"API返回：{response}")
-    click.echo(f"已成功尝试发送")
+        console.print(f"[dim]API返回：{response}[/dim]")
+    console.print("[green]已成功尝试发送[/green]")
 
 @post.command()
 @click.option("--category_id", default=1, help="分区ID")
@@ -87,28 +93,33 @@ def get(category_id, page, per_page, message_type, debug):
         message_type=message_type
     )
     if debug:
-        click.echo(f"API返回：{response}")
+        console.print(f"[dim]API返回：{response}[/dim]")
     if isinstance(response, dict) and response.get("success"):
         for msg in response.get("messages", []):
             msg_type = msg.get("message_type", 0)
             content = msg.get("content", {})
-            prefix = f"[{msg.get('message_id')}] {msg.get('username')}"
+            msg_id = msg.get('message_id')
+            username = msg.get('username')
 
             if msg_type == 3:
                 title = content.get("title", "")
                 text = content.get("content", "")
-                display = f"{prefix}: [{title}] {text}" if title else f"{prefix}: {text}"
+                if title:
+                    console.print(f"[cyan][{msg_id}][/cyan] [green]{username}[/green]: [yellow][{title}][/yellow] {text}")
+                else:
+                    console.print(f"[cyan][{msg_id}][/cyan] [green]{username}[/green]: {text}")
             elif msg_type == 1:
-                display = f"{prefix}: [图片] {content.get('url', '')}"
+                url = content.get('url', '')
+                console.print(f"[cyan][{msg_id}][/cyan] [green]{username}[/green]: [magenta][图片][/magenta] {url}")
             else:
-                display = f"{prefix}: {content.get('text', '')}"
+                text = content.get('text', '')
+                console.print(f"[cyan][{msg_id}][/cyan] [green]{username}[/green]: {text}")
 
-            click.echo(display)
         pagination = response.get("pagination", {})
-        click.echo(f"--- 第{pagination.get('current_page')}/{pagination.get('total_pages')}页 共{pagination.get('total_messages')}条 ---")
+        console.print(f"--- [bold]第{pagination.get('current_page')}/{pagination.get('total_pages')}页[/bold] 共{pagination.get('total_messages')}条 ---")
     elif isinstance(response, dict):
-        click.echo(f"获取失败: {response.get('message')}")
+        console.print(f"[red]获取失败: {response.get('message')}[/red]")
     else:
-        click.echo(f"获取失败: {response}")
+        console.print(f"[red]获取失败: {response}[/red]")
 if __name__ == "__main__":
     cli()
